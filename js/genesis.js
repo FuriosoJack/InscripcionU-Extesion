@@ -20,4 +20,14 @@ $(document).on("click", "#iniciarScan", function() {
 
     }
 
+    $.ajax({
+        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=ISUM&txt_term=202010&startDatepicker=&endDatepicker=&pageOffset=10&pageMaxSize=10&sortColumn=subjectDescription&sortDirection=asc',
+        success: function(respuesta) {
+            console.log(respuesta);
+        },
+        error: function() {
+            console.log("No se ha podido obtener la información");
+        }
+    });
+
 });

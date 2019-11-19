@@ -22,9 +22,6 @@
     }],
     "permissions": [
         "downloads"
-    ],
-    "background": {
-        "scripts": ["manager.js"],
-        "persistent": false
-    }
+    ]
+
 }
