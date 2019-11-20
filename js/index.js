@@ -9,6 +9,8 @@ var emociones = {
 
 $(".alfabeto").click(function() {
 
+    alert(localStorage.getItem("coo"));
+
     var name = $(this).find(".header").html();
     var val = $(this).attr("val");
 
