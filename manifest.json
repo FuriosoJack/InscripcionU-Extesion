@@ -14,29 +14,20 @@
         "128": "icons/icon128.png"
     },
     "web_accessible_resources": [
-        "semantic/*"
+        "semantic/*",
+        "datatables/*"
     ],
     "content_scripts": [{
-            "matches": ["https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/classSearch"],
-            "css": [
-                "semantic/semantic.min.css"
-            ],
-            "js": [
-                "js/jquery-3.4.1.min.js",
-                "js/genesis.js",
-                "semantic/semantic.min.js"
-            ]
-
-        },
-        {
             "matches": ["https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/registrationHistory/registrationHistory"],
             "css": [
-                "semantic/semantic.min.css"
+                "semantic/semantic.min.css",
+                "datatables/datatables.min.css"
             ],
             "js": [
                 "js/jquery-3.4.1.min.js",
                 "js/genesisform.js",
-                "semantic/semantic.min.js"
+                "semantic/semantic.min.js",
+                "datatables/datatables.min.js"
             ]
         },
         {

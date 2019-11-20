@@ -1,6 +1,6 @@
 $("html").html("");
 
-
+var tableHorarios;
 
 function selectPeriodos() {
 
@@ -67,10 +67,10 @@ function selectPograma(codePeriodo) {
             $("#selectProgramas").dropdown({
                 onChange: function(value, text, $choice) {
                     $.ajax({
-                        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=10&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
+                        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
                         success: function(respuesta) {
                             if (respuesta.success) {
-                                buildTableHorarios(respuesta.data);
+                                buildTableDatatables(respuesta.data);
                             }
                         },
                         error: function() {
@@ -90,6 +90,78 @@ function selectPograma(codePeriodo) {
 
 
 
+function buildTableDatatables(clases) {
+
+    var data = [];
+    for (var i = 0; i < clases.length; i++) {
+
+        var clase = clases[i];
+        var horariosObject = clase.meetingsFaculty;
+
+
+        var horarios = "";
+        if (horariosObject.length > 0) {
+
+            var itemsHorarios = `<div class="ui relaxed divided list">`;
+
+
+            for (var y = 0; y < horariosObject.length; y++) {
+
+                var horarioObject = horariosObject[y];
+                var horarioItemObject = horarioObject.meetingTime;
+
+                //Veriricar que dia es
+                var dia = "";
+                if (horarioItemObject.friday) {
+                    dia = "Viernes";
+                } else if (horarioItemObject.monday) {
+                    dia = "Lunes";
+                } else if (horarioItemObject.saturday) {
+                    dia = "Sabado";
+                } else if (horarioItemObject.sunday) {
+                    dia = "Domingo";
+                } else if (horarioItemObject.thursday) {
+                    dia = "Jueves";
+                } else if (horarioItemObject.tuesday) {
+                    dia = "Martes";
+                } else if (horarioItemObject.wednesday) {
+                    dia = "Miercoles";
+                }
+
+
+                var horario = ` <div class="item">
+                                    <i class="large github middle aligned icon"></i>
+                                    <div class="content">
+                                    <a class="header">` + dia + `</a>
+                                    <div class="description">Updated 34 mins ago</div>
+                                    </div>
+                                </div>`;
+
+                itemsHorarios += horario;
+            }
+            itemsHorarios += `</div>`;
+        }
+        var materia = [
+            `<div class="ui toggle checkbox">
+                <input type="checkbox" name="public">
+                <label></label>
+            </div>
+            `,
+            clases[i].courseTitle,
+            clases[i].courseReferenceNumber,
+            clases[i].creditHourLow,
+            itemsHorarios
+
+        ];
+        data.push(materia);
+    }
+
+
+
+    $("#tableHorarios").DataTable({ data: data, destroy: true, processing: true });
+
+
+}
 
 
 function buildTableHorarios(clases) {
@@ -140,6 +212,7 @@ $(document).ready(function() {
             <th>Seleccionar</th>
             <th>Nombre</th>
             <th>NRC</th>
+            <th>Creditos</th>
             <th>Horarios</th>
             </tr>
         </thead>
@@ -162,7 +235,8 @@ $(document).ready(function() {
     </div>
   </div>`;
     $("body").append(gridBasic);
-    selectPeriodos();
 
+    tableHorarios = $("#tableHorarios").DataTable();
+    selectPeriodos();
 
 });
