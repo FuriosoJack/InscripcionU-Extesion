@@ -2,23 +2,32 @@ $("html").html("");
 
 var gridBasic = `<div class="ui internally celled grid">
 <div class="row">
-  <div class="three wide column">
-    <select class="ui fluid  dropdown" id="selectPeriodo">
-     <option value="">Seleccione un Periodo</option>           
-    </select>
-    <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
-        <input type="hidden" name="programa">
-        <i class="dropdown icon"></i>
-        <div class="default text"></div>
-        <div class="menu">
-                    
-        </div>
+  <div class="four wide column">
+  <form class="ui form">
+  <div class="field">
+        <label>Selecionar Periodo</label>
+        <select class="ui fluid  dropdown" id="selectPeriodo">
+            <option value="">Seleccione un Periodo</option>           
+       </select>
     </div>
-    <button class="ui primary button" id="resetAll">
-  Save
-</button>
+    <div class="field">
+        <label>Selecionar Programa</label>
+            <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
+            <input type="hidden" name="programa">
+            <i class="dropdown icon"></i>
+            <div class="default text"></div>
+            <div class="menu">
+                    
+            </div>
+    </div>  
+    </div>
+  </form>
   </div>
-  <div class="threeten wide column">        
+  <div class="twelve wide column">
+  <div class="ui dimmer"  id="loadingSearchMaterias">
+    <div class="ui indeterminate text loader">Cargando Materias</div>
+  </div>
+
   <table class="ui selectable celled table" id="tableHorarios">
     <thead>
         <tr>
@@ -27,6 +36,7 @@ var gridBasic = `<div class="ui internally celled grid">
         <th>NRC</th>
         <th>Creditos</th>
         <th>Horarios</th>
+        <th>Programa</th>
         </tr>
     </thead>
     <tbody>
@@ -49,9 +59,9 @@ var gridBasic = `<div class="ui internally celled grid">
 </div>`;
 $("body").append(gridBasic);
 
-
-
-var tableHorarios;
+var periodoCurrent;
+var programaCurrent;
+var materiasCurrent;
 
 $(document).ready(function(){
 
@@ -71,7 +81,7 @@ $(document).ready(function(){
     
                 $("#selectPeriodo").dropdown({
                         onChange: function(value, text, $choice){
-                            alert(value);
+                           
                              
                             $("#selectProgramas").prop("disabled", true);                            
                             //Registrar el año a matricular (presencial virtual etc)
@@ -86,7 +96,7 @@ $(document).ready(function(){
                                     "endDatepicker": ""
                                 },
                                 success: function(respuesta) {
-
+                                    periodoCurrent = value;
                                     //Habilitar selec de programa
                                     selectPograma(value);
 
@@ -109,18 +119,7 @@ $(document).ready(function(){
     
 
 
-    $("#resetAll").click(function(){
-        inicializarSelectProgramas();
-    });
-
-    function inicializarSelectProgramas()
-    {
-        $('#selectProgramas').dropdown('destroy');
-        $("#selectProgramas").find(".item").remove();
-        $("#selectProgramas").find("input[type='hidden']").val("");
-        $("#selectProgramas").find(".text").html("Seleccione Programa");
-        $("#selectProgramas").find(".text").addClass("default");
-    }
+    
 
     function selectPograma(codePeriodo) {
         
@@ -131,8 +130,9 @@ $(document).ready(function(){
             type: 'GET',
             success: function(respuesta) {
 
-                $("#selectProgramas").prop("disabled", false);
+                $("#selectProgramas").prop("disabled", false);                
                 inicializarSelectProgramas();
+                
 
                 var menu = $("#selectProgramas").find(".menu");
                 for (var i = 0; i < respuesta.length; i++) {
@@ -141,9 +141,13 @@ $(document).ready(function(){
                 $("#selectProgramas").dropdown({
                     onChange: function(value, text, $choice) {
 
-                        //Verificar si toca resetear la seleccion
-
                         
+                        //Mostrar loading
+                        $("#loadingSearchMaterias").dimmer("show");
+
+                        programaCurrent = value;
+
+                        //Verificar si toca resetear la seleccion
                         if($("#selectProgramas").find(".text").html() != ""){
                             $.ajax({
                                 url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/resetDataForm',
@@ -163,24 +167,33 @@ $(document).ready(function(){
                                 },
                                 error: function() {
                                     console.log("No se ha podido obtener la información");
+                                },
+                                complete: function(){
+                                   
                                 }
                             });
                         }else{
                             $.ajax({
                                 url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
                                 success: function(respuesta) {
-                                    if (respuesta.success) {
+                                    if (respuesta.success && !respuesta.isNull("data")) {
+                                        materiasCurrent = respuesta.data;
                                         buildTableHorarios(respuesta.data);
                                     }
                                 },
                                 error: function() {
                                     console.log("No se ha podido obtener la información");
+                                },
+                                complete: function(){
+                                    
                                 }
                             });
                         }                        
                        
                     }
                 });
+
+                $("#selectProgramas").addClass("success");
     
     
             },
@@ -190,86 +203,31 @@ $(document).ready(function(){
         });
     }
     
-    
-    
-    function buildJsonMaterias(clases)
+    function inicializarSelectProgramas()
     {
-
-        var data = [];
-        for (var i = 0; i < clases.length; i++) {
-    
-            var clase = clases[i];
-            var horariosObject = clase.meetingsFaculty;
-    
-    
-            var horarios = "";
-            if (horariosObject.length > 0) {
-    
-                var itemsHorarios = `<div class="ui relaxed divided list">`;
-    
-    
-                for (var y = 0; y < horariosObject.length; y++) {
-    
-                    var horarioObject = horariosObject[y];
-                    var horarioItemObject = horarioObject.meetingTime;
-    
-                    //Veriricar que dia es
-                    var dia = "";
-                    if (horarioItemObject.friday) {
-                        dia = "Viernes";
-                    } else if (horarioItemObject.monday) {
-                        dia = "Lunes";
-                    } else if (horarioItemObject.saturday) {
-                        dia = "Sabado";
-                    } else if (horarioItemObject.sunday) {
-                        dia = "Domingo";
-                    } else if (horarioItemObject.thursday) {
-                        dia = "Jueves";
-                    } else if (horarioItemObject.tuesday) {
-                        dia = "Martes";
-                    } else if (horarioItemObject.wednesday) {
-                        dia = "Miercoles";
-                    }
-    
-    
-                    var horario = ` <div class="item">
-                                        <i class="large github middle aligned icon"></i>
-                                        <div class="content">
-                                        <a class="header">` + dia + `</a>
-                                        <div class="description">Updated 34 mins ago</div>
-                                        </div>
-                                    </div>`;
-    
-                    itemsHorarios += horario;
-                }
-                itemsHorarios += `</div>`;
-            }
-            var materia = [
-                `<div class="ui toggle checkbox">
-                    <input type="checkbox" name="public">
-                    <label></label>
-                </div>
-                `,
-                clases[i].courseTitle,
-                clases[i].courseReferenceNumber,
-                clases[i].creditHourLow,
-                itemsHorarios
-    
-            ];
-            data.push(materia);
-        }
-
-        return data;
-
+        $('#selectProgramas').dropdown('destroy');
+        $("#selectProgramas").find(".item").remove();
+        $("#selectProgramas").find("input[type='hidden']").val("");
+        $("#selectProgramas").find(".text").html("Seleccione Programa");
+        $("#selectProgramas").find(".text").addClass("default");
+        $("#selectProgramas").removeClass("success");
     }
-    
+
     function buildTableDatatables(clases) {
                
     
         var data = buildJsonMaterias(clases);
-       
+       console.log("CLases:");
+       console.log(data);
     
-        var tableHorarios = $("#tableHorarios").DataTable({ data: data, bDestroy:true ,destroy: true, processing: true });
+        var tableHorarios = $("#tableHorarios").DataTable({ 
+            data: data, 
+            destroy: true,
+            processing: true,
+            scrollY: "60vh",
+        });
+
+        $("#loadingSearchMaterias").dimmer("hide");
      
 
     
@@ -297,6 +255,81 @@ $(document).ready(function(){
     
     
     }
+    
+    
+    function buildJsonMaterias(clases)
+    {
+
+        var data = [];
+        for (var i = 0; i < clases.length; i++) {
+    
+            var clase = clases[i];
+            var horariosObject = clase.meetingsFaculty;
+    
+    
+            var itemsHorarios = "Sin Horarios";
+            if (horariosObject.length > 0) {
+    
+                itemsHorarios = `<div class="ui horizontal bulleted link list"><a class="item"></a>`;
+    
+    
+                for (var y = 0; y < horariosObject.length; y++) {
+    
+                    var horarioObject = horariosObject[y];
+                    var horarioItemObject = horarioObject.meetingTime;
+    
+                    //Veriricar que dia es
+                    var dia = "";
+                    if (horarioItemObject.friday) {
+                        dia = "Viernes";
+                    } else if (horarioItemObject.monday) {
+                        dia = "Lunes";
+                    } else if (horarioItemObject.saturday) {
+                        dia = "Sabado";
+                    } else if (horarioItemObject.sunday) {
+                        dia = "Domingo";
+                    } else if (horarioItemObject.thursday) {
+                        dia = "Jueves";
+                    } else if (horarioItemObject.tuesday) {
+                        dia = "Martes";
+                    } else if (horarioItemObject.wednesday) {
+                        dia = "Miercoles";
+                    }
+    
+    
+                    var horario = ` <a class="item">Dia: ` + dia + 
+                    ` | Hora Inicio-> ` +
+                    (horarioItemObject.beginTime.substring(0,2) + ":" + horarioItemObject.beginTime.substring(2,4))+
+                     ` | Hora Fin->  ` +(horarioItemObject.endTime.substring(0,2) +":" + horarioItemObject.endTime.substring(2,4))+
+                      ` | Sede: `+horarioItemObject.campus +
+                      ` | Edificio: `+horarioItemObject.building+
+                      ` | Salon: `+horarioItemObject.room+`</a>`;
+    
+                    itemsHorarios += horario;
+                }
+                itemsHorarios += `</div>`;
+            }
+            var materia = [
+                `<div class="ui toggle checkbox">
+                    <input type="checkbox" name="public">
+                    <label></label>
+                </div>
+                `,
+                clases[i].courseTitle,
+                clases[i].courseReferenceNumber,
+                clases[i].creditHourLow,
+                itemsHorarios,
+                clases[i].subjectDescription
+    
+            ];
+            data.push(materia);
+        }
+
+        return data;
+
+    }
+    
+   
     
 });
 
