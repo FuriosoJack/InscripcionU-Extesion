@@ -27,7 +27,8 @@
                 "js/jquery-3.4.1.min.js",
                 "js/genesisform.js",
                 "semantic/semantic.min.js",
-                "datatables/datatables.min.js"
+                "datatables/datatables.min.js",
+                "js/alasql.min.js"
             ]
         },
         {

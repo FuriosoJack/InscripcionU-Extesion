@@ -216,7 +216,7 @@ $(document).ready(function(){
     function buildTableDatatables(clases) {
                
     
-        var data = buildJsonMaterias(clases);
+       var data = buildJsonMaterias(clases);
        console.log("CLases:");
        console.log(data);
     
@@ -228,7 +228,26 @@ $(document).ready(function(){
         });
 
         $("#loadingSearchMaterias").dimmer("hide");
-     
+        $(".saveMateria").checkbox({
+            onChecked: function(element)
+            {
+                var res = alasql('SELECT * FROM ? WHERE id = '+$(this).val() ,[clases]);                
+                //Si hay un resultado se guarda
+                if(res.length > 0){
+                    guardarMateria(res[0]);
+                }
+                
+                
+            },
+            onUnchecked: function()
+            {
+                alert("eliminar");
+            }
+    
+        });
+
+       
+        
 
     
     }
@@ -309,17 +328,20 @@ $(document).ready(function(){
                 }
                 itemsHorarios += `</div>`;
             }
+
+             //Se pone check los checkbox de las materias que ya estan almacenadas                
+            var checkedInStorage = materiaInStorage(clase.id) ? "checked" : "";
             var materia = [
-                `<div class="ui toggle checkbox">
-                    <input type="checkbox" name="public">
+                `<div class="ui toggle checkbox saveMateria">
+                    <input type="checkbox" name="public" value="`+clase.id+`" `+checkedInStorage+`>
                     <label></label>
                 </div>
                 `,
-                clases[i].courseTitle,
-                clases[i].courseReferenceNumber,
-                clases[i].creditHourLow,
+                clase.courseTitle,
+                clase.courseReferenceNumber,
+                clase.creditHourLow,
                 itemsHorarios,
-                clases[i].subjectDescription
+                clase.subjectDescription
     
             ];
             data.push(materia);
@@ -327,6 +349,41 @@ $(document).ready(function(){
 
         return data;
 
+    }
+
+
+    
+
+
+
+
+    /**
+     * Funciones del Storage
+     */
+    var keyStorage = "inscripcionesU_Materiaas";        
+    function getStorageMaterias(){
+
+        
+        return !localStorage.getItem(keyStorage) ? [] : JSON.parse(localStorage.getItem(keyStorage));
+    }
+
+    function guardarMateria(materia)
+    {
+        var materiasStorage = getStorageMaterias();
+
+        console.log(materiasStorage);
+        console.log(materia);
+        materiasStorage.push(materia);
+
+        localStorage.setItem(keyStorage,JSON.stringify(materiasStorage));
+
+    }
+
+    function materiaInStorage(idMateria)
+    {
+        var res = alasql("SELECT * id FROM ? WHERE id = " + idMateria,[getStorageMaterias()]);
+
+        return res.length > 0;
     }
     
    
