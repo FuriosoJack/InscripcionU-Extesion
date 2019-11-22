@@ -34,6 +34,7 @@ var gridBasic = `<div class="ui internally celled grid">
         <thead>
             <tr>
             <th>Seleccionar</th>
+            <th>#</th>
             <th>Nombre</th>
             <th>NRC</th>
             <th>Creditos</th>
@@ -238,6 +239,8 @@ $(document).ready(function(){
                 //Si hay un resultado se guarda
                 if(res.length > 0){
                     guardarMateria(res[0]);
+                }else{
+                    console.error("no existe coincidencias para guardar materia");
                 }
                 
                 
@@ -322,6 +325,7 @@ $(document).ready(function(){
                     <label></label>
                 </div>
                 `,
+                clase.id,
                 clase.courseTitle,
                 clase.courseReferenceNumber,
                 clase.creditHourLow,
@@ -409,50 +413,176 @@ $(document).ready(function(){
      * Calculo de horarios
      */
 
-    var grillasDeHorarios = [];
+    var grillasDeHorarios = [
+        getNuevaGrilla()
+    ];
 
 
 
     function calcularHorario()
     {
+        console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
+
+        
+        loop1:
         for(i = 0; i < clases.length; i++){
             var clase = clases[i];
+            console.log("Clase:" + clase.id);
+            var grillaActualMisma = -1;
+            var todosLosHorariosEnMismaGrilla = true;
+            //Verificar si todos los horarios pueden estar en la misma grilla
+            //Si no se crea otra grilla 
+            loop2:
             for(o = 0; o < clase.meetingsFaculty.length; o++){
-                var horario = clase.meetingsFaculty[o];
 
+                var horario = clase.meetingsFaculty[o];
                 var horaInicioInt = parseInt(horario.meetingTime.beginTime);
                 var horaFinInt = parseInt(horario.meetingTime.endTime);
-                var tamañoHorario = horaFinInt - horaInicioInt;
+                var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime)+ ":00");
+                var dateFin = new Date(horario.meetingTime.startDate  + " " + getHoraHumano(horario.meetingTime.endTime) + ":00");
+                var diffMillis = (dateFin - dateInicio);
+                var difftotal_seconds = parseInt(Math.floor(diffMillis / 1000));
+                var tamañoHorario = parseInt(Math.floor(difftotal_seconds / 60));
                 var posicionX = calcularDia(horario)["value"] - 1 ;
-                for( p = 0; p <= tamañoHorario; p++){
-                    añadirClaseAGrilla(clase.id,posicionX,calcularPosicionYPorHora(horaInicioInt+p));
+                console.log("date a format->" + horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime)+ ":00");
+                console.log("Date inicio:" + dateInicio);
+                console.log("Date fin:" + dateFin);
+                console.log("Date diff:" + diffMillis);
+                console.log("Date diff:" + tamañoHorario);
+                
+                
+                loop3:
+                for(x = 0; x < grillasDeHorarios.length; x++){
+                    var grillaActual = grillasDeHorarios[x];   
+                    //POSICIONES Y del horario
+                    loop4:
+                    for( p = 0; p <= tamañoHorario; p++){
+                        var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime) + ":00");
+                        var newDateInicio = new Date(dateInicio);
+                        newDateInicio.setMinutes( dateInicio.getMinutes() + p);
+                        var seconds = newDateInicio.getMinutes() == 0 ? "00" : newDateInicio.getMinutes();
+                        var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours()+""+seconds));      
+                        
+                        console.log("--------------------MIma grilla");
+                                
+                        console.log("x: " + posicionX + " y: "+posicionY  + " grilla:" + x);
+                        console.log("new Hours:" + newDateInicio.getHours());
+                        console.log("new secons:" + newDateInicio.getMinutes());
+                        console.log("Hora p+:" + p);
+                        console.log("--------------------");
+                        if(grillaActual[posicionX][posicionY] === undefined){
+
+                            if(grillaActualMisma != -1 && grillaActualMisma != x){
+                                console.log("siguiente grilla");
+                                
+                                console.log("x: " + posicionX + " y: "+posicionY  + " grilla:" + x);
+                                console.log("Hora INicio:" + horaInicioInt);
+                                console.log("Hora fin:" + horaFinInt);
+                                console.log("Hora p+:" + p);
+                                todosLosHorariosEnMismaGrilla = false;
+                                break loop2;
+                            }else{
+                                grillaActualMisma = x;
+                            }                           
+                        }else{
+                            console.log("siguiente grilla");
+                            console.log("x: " + posicionX + " y: "+posicionY  + " grilla:" + x);
+                            console.log("Hora INicio:" + horaInicioInt);
+                            console.log("Hora fin:" + horaFinInt);
+                            console.log("Hora p+:" + p);
+                            todosLosHorariosEnMismaGrilla = false;
+                            break loop2; 
+                           
+                            
+                        }
+                    } 
+                    //Si llego al final de horario y todo estan en la mima grilla pero si es diferente de -1 sale del recorrido de grillas
+                    if(todosLosHorariosEnMismaGrilla && grillaActual != -1){
+                        break loop3;
+                    }
+                    
+                }
+            }  
+            console.log("GrillaActualMima: "+ grillaActualMisma);
+            console.log("TodosENlamiamgrilla: "+ todosLosHorariosEnMismaGrilla);
+            console.log("Horario:");
+            console.log(clase.meetingsFaculty);
+            console.log("Grillas Antesde revisar si se crea o se añade");
+            console.log(JSON.stringify(grillasDeHorarios));
+            //Si todos los horario entran en la misma grilla se añaden
+           //si no se crea otra y añaden
+            if(todosLosHorariosEnMismaGrilla){
+                for(o = 0; o < clase.meetingsFaculty.length; o++){
+                    var horario = clase.meetingsFaculty[o];
+                    var horaInicioInt = parseInt(horario.meetingTime.beginTime);
+                    var horaFinInt = parseInt(horario.meetingTime.endTime);
+                    var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime)+ ":00");
+                    var dateFin = new Date(horario.meetingTime.startDate  + " " + getHoraHumano(horario.meetingTime.endTime) + ":00");
+                    var diffMillis = (dateFin - dateInicio);
+                    var difftotal_seconds = parseInt(Math.floor(diffMillis / 1000));
+                    var tamañoHorario = parseInt(Math.floor(difftotal_seconds / 60));;
+                    var posicionX = calcularDia(horario)["value"] - 1 ;
+                    
+                    for( p = 0; p <= tamañoHorario; p++){
+                        var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime) + ":00");
+                        var newDateInicio = new Date(dateInicio);
+                        newDateInicio.setMinutes( dateInicio.getMinutes() + p);
+                        var seconds = newDateInicio.getMinutes() == 0 ? "00" :  (newDateInicio.getMinutes() < 10 ? "0" + newDateInicio.getMinutes() : newDateInicio.getMinutes());
+                        var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours()+""+seconds));     
+
+                        //añaden los horarios
+                        grillasDeHorarios[grillaActualMisma][posicionX][posicionY] = clase.id;
+                    }
+                }
+            }else{
+                //Se crea una grilla y se añaden los horarios y luego se añade la lista de grillas
+                var newGrilla = getNuevaGrilla();
+                for(o = 0; o < clase.meetingsFaculty.length; o++){
+                    var horario = clase.meetingsFaculty[o];
+                    var horaInicioInt = parseInt(horario.meetingTime.beginTime);
+                    var horaFinInt = parseInt(horario.meetingTime.endTime);
+                    var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime)+ ":00");
+                    var dateFin = new Date(horario.meetingTime.startDate  + " " + getHoraHumano(horario.meetingTime.endTime) + ":00");
+                    var diffMillis = (dateFin - dateInicio);
+                    var difftotal_seconds = parseInt(Math.floor(diffMillis / 1000));
+                    var tamañoHorario = parseInt(Math.floor(difftotal_seconds / 60));;
+                    var posicionX = calcularDia(horario)["value"] - 1 ;
+                    for( p = 0; p <= tamañoHorario; p++){
+                        var dateInicio = new Date(horario.meetingTime.startDate + " " + getHoraHumano(horario.meetingTime.beginTime) + ":00");
+                        var newDateInicio = new Date(dateInicio);
+                        newDateInicio.setMinutes( dateInicio.getMinutes() + p);
+                        var seconds = newDateInicio.getMinutes() == 0 ? "00" :  (newDateInicio.getMinutes() < 10 ? "0" + newDateInicio.getMinutes() : newDateInicio.getMinutes());
+                        var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours()+""+seconds));    
+
+                        //añaden los horarios
+                        newGrilla[posicionX][posicionY] = clase.id;
+                    }
                 }
 
+                grillasDeHorarios.push(newGrilla);
 
-            }        
-
-        }
-
-        console.log(JSON.stringify(grillasDeHorarios));
-    }
-
-    function añadirClaseAGrilla(idClase,x,y)
-    {
-        
-        if(grillasDeHorarios.length == 0){
-            grillasDeHorarios.push(getNuevaGrilla());
-        }
-        
-        
-        for(i = 0; i < grillasDeHorarios.length; i++){
-            var grillaActual = grillasDeHorarios[i];
-            console.log(grillaActual);
-            if(grillaActual[x][y] === undefined){
-                grillaActual[x][y] = idClase;
             }
-        }       
+            console.log("Grillas antes de salid de clase");
+            console.log(JSON.stringify(grillasDeHorarios));
+
+        }
+
+       
     }
+
+
+    function getHoraHumano(horaInt)
+    {
+        return horaInt.substring(0,2) +":" + horaInt.substring(2,4);
+    }
+    function traducirGrilla(grilla)
+    {
+
+
+    }
+
+  
 
     function getNuevaGrilla()
     {
