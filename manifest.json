@@ -29,6 +29,7 @@
                 "semantic/semantic.min.js",
                 "datatables/datatables.min.js",
                 "js/alasql.min.js"
+                
             ]
         },
         {

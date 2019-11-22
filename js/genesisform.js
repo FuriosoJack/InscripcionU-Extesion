@@ -3,46 +3,48 @@ $("html").html("");
 var gridBasic = `<div class="ui internally celled grid">
 <div class="row">
   <div class="four wide column">
-  <form class="ui form">
-  <div class="field">
-        <label>Selecionar Periodo</label>
-        <select class="ui fluid  dropdown" id="selectPeriodo">
-            <option value="">Seleccione un Periodo</option>           
-       </select>
-    </div>
-    <div class="field">
-        <label>Selecionar Programa</label>
-            <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
-            <input type="hidden" name="programa">
-            <i class="dropdown icon"></i>
-            <div class="default text"></div>
-            <div class="menu">
-                    
-            </div>
-    </div>  
-    </div>
-  </form>
+    <form class="ui form">
+        <div class="field">
+                <label>Selecionar Periodo</label>
+                <select class="ui fluid  dropdown" id="selectPeriodo">
+                    <option value="">Seleccione un Periodo</option>           
+            </select>
+        </div>
+        <div class="field">
+            <label>Selecionar Programa</label>
+                <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
+                    <input type="hidden" name="programa">
+                    <i class="dropdown icon"></i>
+                    <div class="default text"></div>
+                    <div class="menu">
+                            
+                    </div>
+                </div>  
+        </div>
+        <div class="field">
+            <button type="button" class="ui yellow button" id="calcularHorario">Generar</button>
+        </div>
+    </form>
   </div>
   <div class="twelve wide column">
   <div class="ui dimmer"  id="loadingSearchMaterias">
     <div class="ui indeterminate text loader">Cargando Materias</div>
   </div>
-
-  <table class="ui selectable celled table" id="tableHorarios">
-    <thead>
-        <tr>
-        <th>Seleccionar</th>
-        <th>Nombre</th>
-        <th>NRC</th>
-        <th>Creditos</th>
-        <th>Horarios</th>
-        <th>Programa</th>
-        </tr>
-    </thead>
-    <tbody>
-        
-    </tbody>
-    </table>
+    <table class="ui selectable celled table" id="tableHorarios">
+        <thead>
+            <tr>
+            <th>Seleccionar</th>
+            <th>Nombre</th>
+            <th>NRC</th>
+            <th>Creditos</th>
+            <th>Horarios</th>
+            <th>Programa</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+        </table>
   </div>
 </div>
 <div class="row">
@@ -58,6 +60,7 @@ var gridBasic = `<div class="ui internally celled grid">
 </div>
 </div>`;
 $("body").append(gridBasic);
+$("head").append("<title>InscripcionesU</title>");
 
 var periodoCurrent;
 var programaCurrent;
@@ -241,7 +244,7 @@ $(document).ready(function(){
             },
             onUnchecked: function()
             {
-                alert("eliminar");
+                eliminarMateriaOfStorage($(this).val());
             }
     
         });
@@ -289,6 +292,7 @@ $(document).ready(function(){
             var itemsHorarios = "Sin Horarios";
             if (horariosObject.length > 0) {
     
+                
                 itemsHorarios = `<div class="ui horizontal bulleted link list"><a class="item"></a>`;
     
     
@@ -296,27 +300,8 @@ $(document).ready(function(){
     
                     var horarioObject = horariosObject[y];
                     var horarioItemObject = horarioObject.meetingTime;
-    
-                    //Veriricar que dia es
-                    var dia = "";
-                    if (horarioItemObject.friday) {
-                        dia = "Viernes";
-                    } else if (horarioItemObject.monday) {
-                        dia = "Lunes";
-                    } else if (horarioItemObject.saturday) {
-                        dia = "Sabado";
-                    } else if (horarioItemObject.sunday) {
-                        dia = "Domingo";
-                    } else if (horarioItemObject.thursday) {
-                        dia = "Jueves";
-                    } else if (horarioItemObject.tuesday) {
-                        dia = "Martes";
-                    } else if (horarioItemObject.wednesday) {
-                        dia = "Miercoles";
-                    }
-    
-    
-                    var horario = ` <a class="item">Dia: ` + dia + 
+                    
+                    var horario = ` <a class="item">Dia: ` + calcularDia(horarioObject)["name"] + 
                     ` | Hora Inicio-> ` +
                     (horarioItemObject.beginTime.substring(0,2) + ":" + horarioItemObject.beginTime.substring(2,4))+
                      ` | Hora Fin->  ` +(horarioItemObject.endTime.substring(0,2) +":" + horarioItemObject.endTime.substring(2,4))+
@@ -352,21 +337,46 @@ $(document).ready(function(){
     }
 
 
+    $("#calcularHorario").click(function(event){
+        event.preventDefault();    
+        calcularHorario();
+        return false;
+    });
+
     
 
 
+    /**
+     * Funciones Adicionales 
+     * 
+     */
 
+    $("head").append("<title>InscripcionesU</title>");
+
+    message = "Calculo de Horarios🚀 ";
+	function step() {
+			message = message.substr(1) + message.substr(0,1);
+            document.title = message.substr(0,15);
+            
+    }
+
+    setInterval(step,100);  
+
+
+    //************************************ */
 
     /**
      * Funciones del Storage
      */
     var keyStorage = "inscripcionesU_Materiaas";        
-    function getStorageMaterias(){
-
-        
+    function getStorageMaterias(){        
         return !localStorage.getItem(keyStorage) ? [] : JSON.parse(localStorage.getItem(keyStorage));
     }
 
+    function guardarMaterias(materias)
+    {
+        localStorage.setItem(keyStorage,JSON.stringify(materias));
+    }
     function guardarMateria(materia)
     {
         var materiasStorage = getStorageMaterias();
@@ -375,18 +385,165 @@ $(document).ready(function(){
         console.log(materia);
         materiasStorage.push(materia);
 
-        localStorage.setItem(keyStorage,JSON.stringify(materiasStorage));
+        guardarMaterias(materiasStorage);
 
     }
 
-    function materiaInStorage(idMateria)
-    {
-        var res = alasql("SELECT * id FROM ? WHERE id = " + idMateria,[getStorageMaterias()]);
-
-        return res.length > 0;
+    function eliminarMateriaOfStorage(idMateria)
+    {                
+        guardarMaterias(getStorageMaterias().filter(function(materia){
+            return idMateria != materia.id
+        }));               
+        
     }
     
+    function materiaInStorage(idMateria)
+    {
+        return alasql("SELECT * id FROM ? WHERE id = " + idMateria,[getStorageMaterias()]).length > 0;
+    }
+
+
+    
    
+    /**
+     * Calculo de horarios
+     */
+
+    var grillasDeHorarios = [];
+
+
+
+    function calcularHorario()
+    {
+        var clases = getStorageMaterias();
+        for(i = 0; i < clases.length; i++){
+            var clase = clases[i];
+            for(o = 0; o < clase.meetingsFaculty.length; o++){
+                var horario = clase.meetingsFaculty[o];
+
+                var horaInicioInt = parseInt(horario.meetingTime.beginTime);
+                var horaFinInt = parseInt(horario.meetingTime.endTime);
+                var tamañoHorario = horaFinInt - horaInicioInt;
+                var posicionX = calcularDia(horario)["value"] - 1 ;
+                for( p = 0; p <= tamañoHorario; p++){
+                    añadirClaseAGrilla(clase.id,posicionX,calcularPosicionYPorHora(horaInicioInt+p));
+                }
+
+
+            }        
+
+        }
+
+        console.log(JSON.stringify(grillasDeHorarios));
+    }
+
+    function añadirClaseAGrilla(idClase,x,y)
+    {
+        
+        if(grillasDeHorarios.length == 0){
+            grillasDeHorarios.push(getNuevaGrilla());
+        }
+        
+        
+        for(i = 0; i < grillasDeHorarios.length; i++){
+            var grillaActual = grillasDeHorarios[i];
+            console.log(grillaActual);
+            if(grillaActual[x][y] === undefined){
+                grillaActual[x][y] = idClase;
+            }
+        }       
+    }
+
+    function getNuevaGrilla()
+    {
+
+        var tamañoX = 7;
+        var tamañoY = 1020;
+        var grillaHorarios = Array(tamañoX);    
+        
+        for(x = 0; x < tamañoX;x++){
+            grillaHorarios[x] =  new Array(tamañoY);            
+        }
+        return grillaHorarios;
+    }
+    
+    
+    function calcularDia(horario)
+    {
+        var detail = horario.meetingTime;
+
+        if (detail.friday) {
+            return {
+                name: "Viernes",
+                value: 5            
+            };
+        } else if (detail.monday) {
+            return {
+                name: "Lunes",
+                value: 1            
+            };
+        } else if (detail.saturday) {
+            return {
+                name: "Sabado",
+                value: 6        
+            };            
+        } else if (detail.sunday) {
+            return {
+                name: "Domingo",
+                value: 7      
+            };            
+        } else if (detail.thursday) {
+            return {
+                name: "Jueves",
+                value: 4      
+            };     
+        } else if (detail.tuesday) {
+            return {
+                name: "Martes",
+                value: 2    
+            };   
+        } else if (detail.wednesday) {
+            
+            return {
+                name: "Miercoles",
+                value: 3     
+            };   
+        }else{
+            return {
+                name: "NO ASIGNADO",
+                value: -1     
+            };  
+        }
+
+    }
+
+    /**
+     * 
+     * @param {*} hora 
+     */
+    function calcularPosicionYPorHora(hora)
+    {    
+        var horaInt = parseInt(hora);
+    /*        
+        
+        var parteFaltante = horaInt % 100;
+        var n60 = ((horaInt - parteFaltante)/100)-5;
+        var valorPosicion = parteFaltante/60;
+        var numeroQuedaPosicion = valorPosicion + n60;
+        return 60 * numeroQuedaPosicion;
+        */
+
+        return Math.round(60*((((horaInt-(horaInt%100))*0.01)-5)+((horaInt%100)/60)));
+
+
+    }
+    
+
+    
+
+
+
+
     
 });
 
