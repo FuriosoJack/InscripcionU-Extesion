@@ -1,3 +1,4 @@
+
 $("html").html("");
 
 var gridBasic = `<div class="ui internally celled grid">
@@ -59,7 +60,9 @@ var gridBasic = `<div class="ui internally celled grid">
     <img>
   </div>
 </div>
-</div>`;
+</div>
+<div class="notification-center-flyout"></div>
+`;
 $("body").append(gridBasic);
 $("head").append("<title>InscripcionesU</title>");
 
@@ -161,6 +164,7 @@ $(document).ready(function(){
                                         url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
                                         success: function(respuesta) {
                                             if (respuesta.success) {
+                                                materiasCurrent = respuesta.data;
                                                 buildTableDatatables(respuesta.data);
                                             }
                                         },
@@ -182,7 +186,7 @@ $(document).ready(function(){
                                 success: function(respuesta) {
                                     if (respuesta.success && !respuesta.isNull("data")) {
                                         materiasCurrent = respuesta.data;
-                                        buildTableHorarios(respuesta.data);
+                                        buildTableDatatables(respuesta.data);
                                     }
                                 },
                                 error: function() {
@@ -232,27 +236,9 @@ $(document).ready(function(){
         });
 
         $("#loadingSearchMaterias").dimmer("hide");
-        $(".saveMateria").checkbox({
-            onChecked: function(element)
-            {
-                var res = alasql('SELECT * FROM ? WHERE id = '+$(this).val() ,[clases]);                
-                //Si hay un resultado se guarda
-                if(res.length > 0){
-                    guardarMateria(res[0]);
-                }else{
-                    console.error("no existe coincidencias para guardar materia");
-                }
-                
-                
-            },
-            onUnchecked: function()
-            {
-                eliminarMateriaOfStorage($(this).val());
-            }
-    
-        });
-
-       
+        
+        
+           
         
 
     
@@ -320,8 +306,8 @@ $(document).ready(function(){
              //Se pone check los checkbox de las materias que ya estan almacenadas                
             var checkedInStorage = materiaInStorage(clase.id) ? "checked" : "";
             var materia = [
-                `<div class="ui toggle checkbox saveMateria">
-                    <input type="checkbox" name="public" value="`+clase.id+`" `+checkedInStorage+`>
+                `<div class="ui toggle checkbox ">
+                    <input type="checkbox" class="saveMateria" name="public" value="`+clase.id+`" `+checkedInStorage+`>
                     <label></label>
                 </div>
                 `,
@@ -347,7 +333,28 @@ $(document).ready(function(){
         return false;
     });
 
+    $(document).on('change',".saveMateria",function(element)
+        {
+
+
+            if(this.checked){
+                var res = alasql('SELECT * FROM ? WHERE id = '+$(this).val() ,[materiasCurrent]);                
+                //Si hay un resultado se guarda
+                if(res.length > 0){
+                    console.log(res[0]);
+                    console.log("guardar");
     
+                    guardarMateria(res[0]);
+                }else{
+                    console.error("no existe coincidencias para guardar materia");
+                }
+            }else{
+                eliminarMateriaOfStorage($(this).val());
+            }
+          
+            
+            
+        }); 
 
 
     /**
