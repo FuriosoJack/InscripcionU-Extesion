@@ -289,7 +289,7 @@ $(document).ready(function(){
     
                     var horarioObject = horariosObject[y];
                     var horarioItemObject = horarioObject.meetingTime;
-                    
+                    console.log(horarioItemObject);
                     var horario = ` <a class="item">Dia: ` + calcularDia(horarioObject)["name"] + 
                     ` | Hora Inicio-> ` +
                     (horarioItemObject.beginTime.substring(0,2) + ":" + horarioItemObject.beginTime.substring(2,4))+
@@ -414,20 +414,14 @@ $(document).ready(function(){
     }
 
 
-    
-   
-    /**
-     * Calculo de horarios
-     */
-
-    var grillasDeHorarios = [
-        getNuevaGrilla()
-    ];
-
-
+  
 
     function calcularHorario()
     {
+        var grillasDeHorarios = [
+            getNuevaGrilla()
+        ];
+    
         console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
 
@@ -572,22 +566,46 @@ $(document).ready(function(){
             }
             console.log("Grillas antes de salid de clase");
             console.log(JSON.stringify(grillasDeHorarios));
-
         }
+        
+        buildTableHorarios(grillasDeHorarios);
+
+
 
        
     }
+
+    function buildTableHorarios(grillas)
+    {
+        var grillasFiltradas = [];
+
+        for(i = 0 ; i < grillas.length; i++){
+            var grillaActual = grillas[i];
+            var grilla = [];
+            //Recorrido de dias de la semana
+            for(o = 0; o < grillaActual.length; o++){
+                var diaFiltrado = Array.from(new Set(grillaActual[o]));
+
+                grilla.push(diaFiltrado);
+            }
+            grillasFiltradas.push(grilla);
+        }
+
+        console.log("Grillas FIltradas");
+        console.log(JSON.stringify(grillasFiltradas));
+
+
+    }
+
+
+
+
 
 
     function getHoraHumano(horaInt)
     {
         return horaInt.substring(0,2) +":" + horaInt.substring(2,4);
-    }
-    function traducirGrilla(grilla)
-    {
-
-
-    }
+    }  
 
   
 
@@ -595,7 +613,7 @@ $(document).ready(function(){
     {
 
         var tamañoX = 7;
-        var tamañoY = 1020;
+        var tamañoY = 960;
         var grillaHorarios = Array(tamañoX);    
         
         for(x = 0; x < tamañoX;x++){
@@ -654,6 +672,55 @@ $(document).ready(function(){
 
     }
 
+    calcularDiaPorPosicion(posicion)
+    {
+        //alasql("select * from ? as data where data.meetingTime.tuesday = true ",[select1[0].meetingsFaculty])
+        //var select1 = alasql("select datos.meetingsFaculty from ? as datos where datos.id = 878136", [dataa])
+        if (posicion == 5) {
+            return {
+                name: "Viernes",
+                value: ""            
+            };
+        } else if (detail.monday) {
+            return {
+                name: "Lunes",
+                value: 1            
+            };
+        } else if (detail.saturday) {
+            return {
+                name: "Sabado",
+                value: 6        
+            };            
+        } else if (detail.sunday) {
+            return {
+                name: "Domingo",
+                value: 7      
+            };            
+        } else if (detail.thursday) {
+            return {
+                name: "Jueves",
+                value: 4      
+            };     
+        } else if (detail.tuesday) {
+            return {
+                name: "Martes",
+                value: 2    
+            };   
+        } else if (detail.wednesday) {
+            
+            return {
+                name: "Miercoles",
+                value: 3     
+            };   
+        }else{
+            return {
+                name: "NO ASIGNADO",
+                value: -1     
+            };  
+        }
+
+    }
+
     /**
      * 
      * @param {*} hora 
@@ -670,10 +737,26 @@ $(document).ready(function(){
         return 60 * numeroQuedaPosicion;
         */
 
-        return Math.round(60*((((horaInt-(horaInt%100))*0.01)-5)+((horaInt%100)/60)));
+        return Math.round(60*((((horaInt-(horaInt%100))*0.01)-6)+((horaInt%100)/60)));
 
 
     }
+
+    function calcularHoraPorPosicionY(posicionY)
+    {
+        /*var numeroQuedaPosicion = posicionX/60;        
+        var valorPosicion = numeroQuedaPosicion % 1;
+        var n60 = numeroQuedaPosicion - valorPosicion;
+        var parteFaltante = valorPosicion * 60;
+        var horaInt = ((n60+5)*100)+parteFaltante;*/       
+        
+        return ((((posicionY/60)-((posicionY/60)%1))+6)*100)+(((posicionY/60)%1)*60);
+
+
+
+    }
+
+
     
 
     
