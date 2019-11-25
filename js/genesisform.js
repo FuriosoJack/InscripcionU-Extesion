@@ -465,16 +465,11 @@ $(document).ready(function() {
                                         var seconds = newDateInicio.getMinutes() == 0 ? "00" : newDateInicio.getMinutes();
                                         var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours() + "" + seconds));
 
-                                        if (grillaActual[posicionX][posicionY] === undefined && !claseInGrillaByCurso(clase.courseNumber, grillaActual)) {
-
-                                            if (grillaActualMisma != -1 && grillaActualMisma != x) {
+                                        if (grillaActual[posicionX][posicionY] === undefined && !(grillaActualMisma != -1 && grillaActualMisma != x) && !(claseInGrillaByCurso(clase.courseNumber, grillaActual))) {
 
 
-                                                todosLosHorariosEnMismaGrilla = false;
-                                                break loop2;
-                                            } else {
-                                                grillaActualMisma = x;
-                                            }
+                                            grillaActualMisma = x;
+
                                         } else {
 
                                             todosLosHorariosEnMismaGrilla = false;
@@ -559,8 +554,10 @@ $(document).ready(function() {
         //Dias de la semana
         for (i = 0; i < grilla.length; i++) {
             var clasesEnDia = Array.from(new Set(grilla[i]));
+            console.log(clasesEnDia);
             for (o = 0; o < clasesEnDia.length; o++) {
-                if (clasesEnDia[o] !== undefined && getMateriaInStorageCurso(clasesEnDia[o], curso).length > 0) {
+
+                if (clasesEnDia[o] !== undefined && (getMateriaInStorageCurso(clasesEnDia[o], curso).length > 0)) {
                     return true;
                 }
             }
