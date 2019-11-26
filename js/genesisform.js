@@ -315,7 +315,7 @@ $(document).ready(function() {
                 clase.courseReferenceNumber,
                 clase.creditHourLow,
                 itemsHorarios,
-				clase.courseNumber,
+                clase.courseNumber,
                 clase.subjectDescription
 
             ];
@@ -435,8 +435,8 @@ $(document).ready(function() {
         var grillasDeHorarios = [
             getNuevaGrilla()
         ];
-		
-		var cursosGrillas = [];
+
+        var cursosGrillas = [];
 
         console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
@@ -469,9 +469,9 @@ $(document).ready(function() {
                                         newDateInicio.setMinutes(dateInicio.getMinutes() + p);
                                         var seconds = newDateInicio.getMinutes() == 0 ? "00" : newDateInicio.getMinutes();
                                         var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours() + "" + seconds));
-										
+
                                         if (grillaActual[posicionX][posicionY] === undefined && !(grillaActualMisma != -1 && grillaActualMisma != x) && cursosGrillas[x] != clase.courseNumber) {
-									
+
                                             grillaActualMisma = x;
 
                                         } else {
@@ -512,8 +512,8 @@ $(document).ready(function() {
 
                             //añaden los horarios
                             grillasDeHorarios[grillaActualMisma][posicionX][posicionY] = clase.id;
-							
-							cursosGrillas[grillaActualMisma] = clase.courseNumber;
+
+                            cursosGrillas[grillaActualMisma] = clase.courseNumber;
                         }
                     }
                 } else {
@@ -537,7 +537,7 @@ $(document).ready(function() {
                     }
 
                     grillasDeHorarios.push(newGrilla);
-					cursosGrillas[(grillasDeHorarios.length)-1] = clase.courseNumber;
+                    cursosGrillas[(grillasDeHorarios.length) - 1] = clase.courseNumber;
 
                 }
                 console.log("Grillas antes de salid de clase");
@@ -545,7 +545,8 @@ $(document).ready(function() {
             }
 
         buildTableHorarios(grillasDeHorarios);
-		console.log(cursosGrillas);
+        console.log("Grillas cursos");
+        console.log(cursosGrillas);
 
 
 
@@ -564,11 +565,11 @@ $(document).ready(function() {
 
     function buildTableHorarios(grillas) {
         var grillasFiltradas = [];
-		var totalTables;
+        var totalTables;
         for (i = 0; i < grillas.length; i++) {
             var grillaActual = grillas[i];
             var grilla = [];
-            var tableHTML = "<table><tr><th>Dia</th><th>Materia</th></tr>";
+            var tableHTML = "<table border='1'><tr><th>Dia</th><th>Hora Inicio</th><th>Hora Fin</th><th>Materia</th><th>NRC</th><th>Curso</th></tr>";
             //Recorrido de dias de la semana
             for (o = 0; o < grillaActual.length; o++) {
                 var diaFiltrado = Array.from(new Set(grillaActual[o]));
@@ -585,8 +586,15 @@ $(document).ready(function() {
                         console.log(diaFiltrado[p])
                         console.log(materia);
                         console.log(diaSemana["name"]);
+                        var horario = alasql("SELECT * FROM ? as data where data.meetingTime." + diaSemana["value"] + " = true", [materia.meetingsFaculty])
+                        console.log("Hoario");
+
                         tableHTML += "<td>" + diaSemana["name"] + "</td>";
+                        tableHTML += "<td>" + (horario.meetingTime.beginTime.substring(0, 2) + ":" + horario.meetingTime.beginTime.substring(2, 4)) + "</td>";
+                        tableHTML += "<td>" + (horario.meetingTime.endTime.substring(0, 2) + ":" + horario.meetingTime.endTime.substring(2, 4)) + "</td>";
                         tableHTML += "<td>" + materia.courseTitle + "</td>";
+                        tableHTML += "<td>" + materia.courseReferenceNumber + "</td>";
+                        tableHTML += "<td>" + materia.courseNumber + "</td>";
                         tableHTML += "<tr>";
 
                     }
@@ -595,15 +603,14 @@ $(document).ready(function() {
 
 
 
-
                 grilla.push(diaFiltrado);
             }
             tableHTML += "</table>";
-			totalTables += tableHTML;
+            totalTables += tableHTML;
             grillasFiltradas.push(grilla);
         }
-		
-		console.log(totalTables);
+
+        console.log(totalTables);
 
 
 
@@ -612,6 +619,8 @@ $(document).ready(function() {
 
 
     }
+
+
 
 
 
