@@ -39,6 +39,7 @@ var gridBasic = `<div class="ui internally celled grid">
             <th>NRC</th>
             <th>Creditos</th>
             <th>Horarios</th>
+			<th>Curso</th>
             <th>Programa</th>
             </tr>
         </thead>
@@ -258,6 +259,7 @@ $(document).ready(function() {
                     <td>` + data[i][2] + `</td>
                     <td>` + data[i][3] + `</td>
                     <td>` + data[i][4] + `</td>
+					<td>` + data[i][5] + `</td>
                 </tr>
             `);
         }
@@ -313,6 +315,7 @@ $(document).ready(function() {
                 clase.courseReferenceNumber,
                 clase.creditHourLow,
                 itemsHorarios,
+				clase.courseNumber,
                 clase.subjectDescription
 
             ];
@@ -432,6 +435,8 @@ $(document).ready(function() {
         var grillasDeHorarios = [
             getNuevaGrilla()
         ];
+		
+		var cursosGrillas = [];
 
         console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
@@ -464,10 +469,9 @@ $(document).ready(function() {
                                         newDateInicio.setMinutes(dateInicio.getMinutes() + p);
                                         var seconds = newDateInicio.getMinutes() == 0 ? "00" : newDateInicio.getMinutes();
                                         var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours() + "" + seconds));
-
-                                        if (grillaActual[posicionX][posicionY] === undefined && !(grillaActualMisma != -1 && grillaActualMisma != x) && !(claseInGrillaByCurso(clase.courseNumber, grillaActual))) {
-
-
+										
+                                        if (grillaActual[posicionX][posicionY] === undefined && !(grillaActualMisma != -1 && grillaActualMisma != x) && cursosGrillas[x] != clase.courseNumber) {
+									
                                             grillaActualMisma = x;
 
                                         } else {
@@ -508,6 +512,8 @@ $(document).ready(function() {
 
                             //añaden los horarios
                             grillasDeHorarios[grillaActualMisma][posicionX][posicionY] = clase.id;
+							
+							cursosGrillas[grillaActualMisma] = clase.courseNumber;
                         }
                     }
                 } else {
@@ -531,6 +537,7 @@ $(document).ready(function() {
                     }
 
                     grillasDeHorarios.push(newGrilla);
+					cursosGrillas[(grillasDeHorarios.length)-1] = clase.courseNumber;
 
                 }
                 console.log("Grillas antes de salid de clase");
@@ -538,33 +545,13 @@ $(document).ready(function() {
             }
 
         buildTableHorarios(grillasDeHorarios);
+		console.log(cursosGrillas);
 
 
 
 
     }
 
-
-    /**
-     * Se encarga de verificar si en la grilla existe una clase on ese mismo nrc
-     */
-    function claseInGrillaByCurso(curso, grilla) {
-        console.log("grilla comprobar");
-        console.log(grilla);
-        //Dias de la semana
-        for (i = 0; i < grilla.length; i++) {
-            var clasesEnDia = Array.from(new Set(grilla[i]));
-            console.log(clasesEnDia);
-            for (o = 0; o < clasesEnDia.length; o++) {
-
-                if (clasesEnDia[o] !== undefined && (getMateriaInStorageCurso(clasesEnDia[o], curso).length > 0)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 
     function calcularNminutosentreFechas(meetingTime) {
         var dateInicio = new Date(meetingTime.startDate + " " + getHoraHumano(meetingTime.beginTime) + ":00");
@@ -577,7 +564,7 @@ $(document).ready(function() {
 
     function buildTableHorarios(grillas) {
         var grillasFiltradas = [];
-
+		var totalTables;
         for (i = 0; i < grillas.length; i++) {
             var grillaActual = grillas[i];
             var grilla = [];
@@ -612,9 +599,11 @@ $(document).ready(function() {
                 grilla.push(diaFiltrado);
             }
             tableHTML += "</table>";
-            console.log(tableHTML);
+			totalTables += tableHTML;
             grillasFiltradas.push(grilla);
         }
+		
+		console.log(totalTables);
 
 
 
