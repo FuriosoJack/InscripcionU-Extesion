@@ -1,6 +1,12 @@
 $("html").html("");
 
-var gridBasic = `<div class="ui internally celled grid">
+var gridBasic = `
+<div class="ui fixed inverted main menu">
+  <a class="item right" title="Ayuda">   
+    ?    
+  </a>
+</div>
+<div class="ui internally celled grid">
 <div class="row">
   <div class="four wide column">
     <form class="ui form">
@@ -20,9 +26,11 @@ var gridBasic = `<div class="ui internally celled grid">
                             
                     </div>
                 </div>  
-        </div>
-        <div class="field">
-            <button type="button" class="ui yellow button" id="calcularHorario">Generar</button>
+        </div>        
+        <div class="field right">
+             <div class="ui buttons">                
+                <button class="ui yellow button" disabled id="buscarClases">Buscar</button>               
+            </div>
         </div>
     </form>
   </div>
@@ -30,7 +38,7 @@ var gridBasic = `<div class="ui internally celled grid">
   <div class="ui dimmer"  id="loadingSearchMaterias">
     <div class="ui indeterminate text loader">Cargando Materias</div>
   </div>
-    <table class="ui selectable celled table" id="tableHorarios">
+    <table class="ui selectable inverted table" id="tableHorarios">
         <thead>
             <tr>
             <th>Seleccionar</th>
@@ -50,15 +58,9 @@ var gridBasic = `<div class="ui internally celled grid">
   </div>
 </div>
 <div class="row">
-  <div class="three wide column">
+  <div class="sixteen wide column" id="tablasHorarios">
     <img>
-  </div>
-  <div class="ten wide column" id="tablasHorarios">
-    <p></p>
-  </div>
-  <div class="three wide column">
-    <img>
-  </div>
+  </div>  
 </div>
 </div>
 <div class="notification-center-flyout"></div>
@@ -73,55 +75,163 @@ var materiasCurrent;
 $(document).ready(function() {
 
     // tableHorarios = $("#tableHorarios").DataTable();
+    
+
+    //inicializar Dropdown Filrtros dias
+
+    $("#filtroDiasSemana").dropdown();
+
+    $(".popool").popup({
+        inline: true
+      });
 
 
-    //Poner La lista de periodos
-    $.ajax({
-        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/getTerms?searchTerm=&offset=1&max=1000',
-        type: 'GET',
-        success: function(respuesta) {
 
-            for (var i = 0; i < respuesta.length; i++) {
-                $("#selectPeriodo").append('<option value="' + respuesta[i].code + '">' + respuesta[i].description + '</option>');
-            }
+      
 
 
-            $("#selectPeriodo").dropdown({
-                onChange: function(value, text, $choice) {
+    $("#buscarClases").click(function(e){
+
+        e.preventDefault();
+        
+
+        var button = $(this);
+        var value = $("#selectProgramas").dropdown("get value");
+        var codePeriodo = $(this).attr("codePeriodo");
+
+        if(value != ""){
+
+            //Mostrar loading
+            $("#loadingSearchMaterias").dimmer({closable:false}).dimmer("show");
+            programaCurrent = value;
 
 
-                    $("#selectProgramas").prop("disabled", true);
-                    //Registrar el año a matricular (presencial virtual etc)
-                    $.ajax({
-                        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/term/search?mode=search',
-                        type: 'post',
-                        data: {
-                            "term": value,
-                            "studyPath": "",
-                            "studyPathText": "",
-                            "startDatepicker": "",
-                            "endDatepicker": ""
-                        },
-                        success: function(respuesta) {
-                            periodoCurrent = value;
-                            //Habilitar selec de programa
-                            selectPograma(value);
-
-                        },
-                        error: function() {
-                            console.log("No se ha podido obtener la información");
+            //Verificar si toca resetear la seleccion
+            button.prop("disabled",true);
+            if ($("#selectProgramas").find(".text").html() != "") {
+                $.ajax({
+                    url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/resetDataForm',
+                    type: 'POST',
+                    success: function(respuesta) {
+                        $.ajax({
+                            url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
+                            success: function(respuesta) {
+                                if (respuesta.success) {                                                
+                                    materiasCurrent = respuesta.data;
+                                    if(materiasCurrent !== undefined){
+                                        buildTableDatatables(materiasCurrent);
+                                    }
+                                
+                                }
+                            },
+                            error: function() {
+                                console.log("No se ha podido obtener la información");
+                            }
+                        });
+                    },
+                    error: function() {
+                        console.log("No se ha podido obtener la información");
+                    },
+                    complete: function() {
+                        
+                    }
+                });
+            } else {
+                $.ajax({
+                    url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
+                    success: function(respuesta) {
+                        if (respuesta.success && !respuesta.isNull("data")) {
+                            materiasCurrent = respuesta.data;
+                            buildTableDatatables(respuesta.data);
                         }
-                    });
+                    },
+                    error: function() {
+                        console.log("No se ha podido obtener la información");
+                    },
+                    complete: function() {
+                       
+                    }
+                });
+            }
+        }else{
+            alert("Selecione un Programa");
+        }     
+
+    });
+
+
+    $("#limpiarBusqueda").click(function(e){
+        e.preventDefault();
+        
+        inicializarBotonBuscar();
+        inicializarSelectProgramas();
+        $("#tableHorarios").DataTable({
+            data: [],
+            destroy: true,
+            processing: true,
+            scrollY: "60vh",
+        });
+
+
+    });
+
+
+    llamarListaDePeriodos();
+
+
+
+    function llamarListaDePeriodos()
+    {
+        //Poner La lista de periodos
+        $.ajax({
+            url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/getTerms?searchTerm=&offset=1&max=1000',
+            type: 'GET',
+            success: function(respuesta) {
+
+                for (var i = 0; i < respuesta.length; i++) {
+                    $("#selectPeriodo").append('<option value="' + respuesta[i].code + '">' + respuesta[i].description + '</option>');
                 }
 
-            });
+
+                $("#selectPeriodo").dropdown({
+                    onChange: function(value, text, $choice) {
 
 
-        },
-        error: function() {
-            console.log("No se ha podido obtener la información");
-        }
-    });
+                        $("#selectProgramas").prop("disabled", true);
+                        //Registrar el año a matricular (presencial virtual etc)
+                        $.ajax({
+                            url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/term/search?mode=search',
+                            type: 'post',
+                            data: {
+                                "term": value,
+                                "studyPath": "",
+                                "studyPathText": "",
+                                "startDatepicker": "",
+                                "endDatepicker": ""
+                            },
+                            success: function(respuesta) {
+                                periodoCurrent = value;
+                                //Habilitar selec de programa
+                                selectPograma(value);
+
+                            },
+                            error: function() {
+                                console.log("No se ha podido obtener la información");
+                            }
+                        });
+                    }
+
+                });
+
+
+            },
+            error: function() {
+                console.log("No se ha podido obtener la información");
+            }
+        });
+
+    }
+    
 
 
 
@@ -145,63 +255,11 @@ $(document).ready(function() {
                 for (var i = 0; i < respuesta.length; i++) {
                     menu.append('<div class="item" data-value="' + respuesta[i].code + '">' + respuesta[i].description + '</div>');
                 }
-                $("#selectProgramas").dropdown({
-                    onChange: function(value, text, $choice) {
-
-
-                        //Mostrar loading
-                        $("#loadingSearchMaterias").dimmer("show");
-
-                        programaCurrent = value;
-
-                        //Verificar si toca resetear la seleccion
-                        if ($("#selectProgramas").find(".text").html() != "") {
-                            $.ajax({
-                                url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/classSearch/resetDataForm',
-                                type: 'POST',
-                                success: function(respuesta) {
-                                    $.ajax({
-                                        url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
-                                        success: function(respuesta) {
-                                            if (respuesta.success) {
-                                                materiasCurrent = respuesta.data;
-                                                buildTableDatatables(respuesta.data);
-                                            }
-                                        },
-                                        error: function() {
-                                            console.log("No se ha podido obtener la información");
-                                        }
-                                    });
-                                },
-                                error: function() {
-                                    console.log("No se ha podido obtener la información");
-                                },
-                                complete: function() {
-
-                                }
-                            });
-                        } else {
-                            $.ajax({
-                                url: 'https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=' + value + '&txt_term=' + codePeriodo + '&startDatepicker=&endDatepicker=&pageOffset=0&pageMaxSize=10000&sortColumn=subjectDescription&sortDirection=asc',
-                                success: function(respuesta) {
-                                    if (respuesta.success && !respuesta.isNull("data")) {
-                                        materiasCurrent = respuesta.data;
-                                        buildTableDatatables(respuesta.data);
-                                    }
-                                },
-                                error: function() {
-                                    console.log("No se ha podido obtener la información");
-                                },
-                                complete: function() {
-
-                                }
-                            });
-                        }
-
-                    }
-                });
+                $("#selectProgramas").dropdown();
 
                 $("#selectProgramas").addClass("success");
+                $("#buscarClases").prop("disabled",false);
+                $("#buscarClases").attr("codePeriodo",codePeriodo)
 
 
             },
@@ -220,6 +278,21 @@ $(document).ready(function() {
         $("#selectProgramas").removeClass("success");
     }
 
+    function inicializarSelectPeriodo()
+    {
+        $('#selectPeriodo').dropdown('destroy');
+        llamarListaDePeriodos();
+
+
+    }
+
+    function inicializarBotonBuscar()
+    {
+        $("#buscarClases").prop("disabled",true);
+        $("#buscarClases").attr("codePeriodo","")
+
+    }
+
     function buildTableDatatables(clases) {
 
 
@@ -235,6 +308,7 @@ $(document).ready(function() {
         });
 
         $("#loadingSearchMaterias").dimmer("hide");
+        $("#buscarClases").prop("disabled",false);
 
 
 
@@ -277,49 +351,73 @@ $(document).ready(function() {
             var horariosObject = clase.meetingsFaculty;
 
 
-            var itemsHorarios = "Sin Horarios";
+           
             if (horariosObject.length > 0) {
 
 
-                itemsHorarios = `<div class="ui horizontal bulleted link list"><a class="item"></a>`;
+                var sinDia = false;
+                var  itemsHorarios = `<div class="ui horizontal inverted bulleted link list"><a class="item"></a>`;
 
-
+              
                 for (var y = 0; y < horariosObject.length; y++) {
 
                     var horarioObject = horariosObject[y];
                     var horarioItemObject = horarioObject.meetingTime;
+                    var diaHumano  = calcularDia(horarioObject);                    
+                    if(diaHumano["value"] == -1){
+                        sinDia = true;
+                        break;
+                    }
                     console.log(horarioItemObject);
-                    var horario = ` <a class="item">Dia: ` + calcularDia(horarioObject)["name"] +
+
+                    try{
+                        var horario = ` <a class="item">Dia: ` + diaHumano["name"] +
                         ` | Hora Inicio-> ` +
-                        (horarioItemObject.beginTime.substring(0, 2) + ":" + horarioItemObject.beginTime.substring(2, 4)) +
-                        ` | Hora Fin->  ` + (horarioItemObject.endTime.substring(0, 2) + ":" + horarioItemObject.endTime.substring(2, 4)) +
+                        getHoraHumano(horarioItemObject.beginTime) +
+                        ` | Hora Fin->  ` + getHoraHumano(horarioItemObject.endTime) +
                         ` | Sede: ` + horarioItemObject.campus +
                         ` | Edificio: ` + horarioItemObject.building +
                         ` | Salon: ` + horarioItemObject.room + `</a>`;
+                    }
+                    catch(error){
+                        //Si ocurre error posiblemente es por que no tien hora de salida o de entrada
+                        console.error(error);
+                        sinDia = true;
+                        //Nos salimos del dia para que no se tenga en cuenta en la tabla
+                        break;
+                    }                  
 
                     itemsHorarios += horario;
                 }
+
+
                 itemsHorarios += `</div>`;
+
+                 //Se pone check los checkbox de las materias que ya estan almacenadas                
+                var checkedInStorage = materiaInStorage(clase.id) ? "checked" : "";
+                var materia = [
+                    `<div class="ui toggle checkbox ">
+                        <input type="checkbox" class="saveMateria" name="public" value="` + clase.id + `" ` + checkedInStorage + `>
+                        <label></label>
+                    </div>
+                    `,
+                    clase.id,
+                    clase.courseTitle,
+                    clase.courseReferenceNumber,
+                    clase.creditHourLow,
+                    itemsHorarios,
+                    clase.courseNumber,
+                    clase.subjectDescription
+
+                ];
+                //SOlo se ingresen los dias que tiene dia
+                if(!sinDia){
+                    data.push(materia);
+                }
+                
             }
 
-            //Se pone check los checkbox de las materias que ya estan almacenadas                
-            var checkedInStorage = materiaInStorage(clase.id) ? "checked" : "";
-            var materia = [
-                `<div class="ui toggle checkbox ">
-                    <input type="checkbox" class="saveMateria" name="public" value="` + clase.id + `" ` + checkedInStorage + `>
-                    <label></label>
-                </div>
-                `,
-                clase.id,
-                clase.courseTitle,
-                clase.courseReferenceNumber,
-                clase.creditHourLow,
-                itemsHorarios,
-                clase.courseNumber,
-                clase.subjectDescription
-
-            ];
-            data.push(materia);
+           
         }
 
         return data;
