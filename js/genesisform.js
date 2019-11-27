@@ -393,11 +393,23 @@ $(document).ready(function() {
 
     function guardarMateria(materia) {
         var materiasStorage = getStorageMaterias();
+        //orgenar array 
 
         console.log(materiasStorage);
         console.log(materia);
         materiasStorage.push(materia);
+        materiasStorage.sort(function(a,b){
+            if(a.creditHourLow < b.creditHourLow){
+                return -1;
+            }
+            if(a.creditHourLow > b.creditHourLow){
+                return 1;
+            }
 
+            return 0;
+
+            
+        });
         guardarMaterias(materiasStorage);
 
     }
@@ -444,7 +456,7 @@ $(document).ready(function() {
                 newDateInicio.setMinutes(dateInicio.getMinutes() + iMinuto);
                 var seconds = newDateInicio.getMinutes() <= 9 ? "0" + newDateInicio.getMinutes() : newDateInicio.getMinutes();
                 var posicionY = calcularPosicionYPorHora(parseInt(newDateInicio.getHours() + "" + seconds));
-                console.log("x:" + posicionX + "y:" + posicionY);
+             //   console.log("x:" + posicionX + "y:" + posicionY);
                 if (grillaActual[posicionX][posicionY] !== undefined) {   
                     
                     console.log(grillaActual[posicionX][posicionY]);
@@ -481,15 +493,16 @@ $(document).ready(function() {
     }
     function calcularHorario() {
         var grillasDeHorarios = [
-            getNuevaGrilla()
         ];
 
         var cursosGrillas = [
-            [
-                {"id" : null,
-                "programa": null}
-            ]
         ];
+
+        var creditosGrillas = [
+
+        ];
+
+        
 
         console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
@@ -503,14 +516,19 @@ $(document).ready(function() {
 
                 //Se comprueba si se puede en una grilla o se crea una nueva
                 for (x = 0; x < grillasDeHorarios.length; x++) {
-                    console.log("x:" + x);
+                    //console.log("x:" + x);
                     var grillaActual = grillasDeHorarios[x];
                     var cursoEnGrilla =cursoYaEnGrilla({"id":clase.id,"programa": clase.courseNumber},cursosGrillas[x]);
-                    if((cursoEnGrilla == 0 || cursoEnGrilla == 2) && claseCaveEnGrilla(clase,grillaActual)){      
+                    if((cursoEnGrilla == 0 || cursoEnGrilla == 2) && claseCaveEnGrilla(clase,grillaActual) && creditosGrillas[x] < 18){      
                        if(cursoEnGrilla == 0){
-                            cursosGrillas[x].push({"id":clase.id,"programa": clase.courseNumber});
+                            console.log("ubacaion grilla:");
+                           console.log(x);
+                           console.log(cursosGrillas);
+                           cursosGrillas[x].push({"id":clase.id,"programa": clase.courseNumber});
                        }                  
                        grillaSeleccionada = x;
+                       creditosGrillas[x] = creditosGrillas[x] + parseInt(clase.creditHourLow);
+                       break;
                     }
                 }
 
@@ -534,9 +552,10 @@ $(document).ready(function() {
 
                     grillasDeHorarios.push(newGrilla);
                     cursosGrillas.push([{"id":clase.id,"programa": clase.courseNumber}]);
+                    creditosGrillas.push(parseInt(clase.creditHourLow));
                 }else{
                     for (o = 0; o < clase.meetingsFaculty.length; o++) {
-                        console.log("o:" + o);
+                        //console.log("o:" + o);
                         var horario = clase.meetingsFaculty[o];
                         var tamañoHorario = calcularNminutosentreFechas(horario.meetingTime);
                         var posicionX = calcularDia(horario)["value"] - 1;
@@ -565,9 +584,13 @@ $(document).ready(function() {
                 
             console.log("Grillas terminadas");
             console.log(JSON.stringify(grillasDeHorarios));
-        buildTableHorarios(grillasDeHorarios);
+        buildTableHorarios(grillasDeHorarios,creditosGrillas);
         console.log("Grillas cursos");
         console.log(cursosGrillas);
+
+        console.log("Grillas Creditos");
+        console.log(creditosGrillas);
+
 
 
 
@@ -584,18 +607,19 @@ $(document).ready(function() {
         return total;
     }
 
-    function buildTableHorarios(grillas) {
+    function buildTableHorarios(grillas,creditosGrillas) {
         var grillasFiltradas = [];
-        var totalTables;
+        var totalTables = "";
         for (i = 0; i < grillas.length; i++) {
             var grillaActual = grillas[i];
             var grilla = [];
-            var tableHTML = "<table border='1'><tr><th>Dia</th><th>Hora Inicio</th><th>Hora Fin</th><th>Materia</th><th>NRC</th><th>Curso</th><th>ID</th></tr>";
+            var tableHTML = "<table class='ui celled striped table'><thead><tr><th>Dia</th><th>Hora Inicio</th><th>Hora Fin</th><th>Materia</th><th>NRC</th><th>Curso</th><th>Creditos</th><th>ID</th></tr></thead><tbody>";
             //Recorrido de dias de la semana
+            
             for (o = 0; o < grillaActual.length; o++) {
                 var diaFiltrado = Array.from(new Set(grillaActual[o]));
 
-
+                
 
                 //recorrido de dias de la frilla
                 for (p = 0; p < diaFiltrado.length; p++) {
@@ -617,17 +641,22 @@ $(document).ready(function() {
                         tableHTML += "<td>" + materia.courseTitle + "</td>";
                         tableHTML += "<td>" + materia.courseReferenceNumber + "</td>";
                         tableHTML += "<td>" + materia.courseNumber + "</td>";
+                        tableHTML += "<td>" + materia.creditHourLow + "</td>";
                         tableHTML += "<td>" + materia.id + "</td>";
                         tableHTML += "<tr>";
+                       
 
                     }
                 }
+
+                
                 tableHTML += "</tr>";
 
 
 
                 grilla.push(diaFiltrado);
             }
+            tableHTML += "</tbody><tfoot class='full-width'><tr><th colspan='6'>Total Creditos</th><th colspan='2'>"+creditosGrillas[i]+"</th></tr></tfoot>"
             tableHTML += "</table>";
             totalTables += tableHTML;
             grillasFiltradas.push(grilla);
