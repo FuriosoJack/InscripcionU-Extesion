@@ -7,61 +7,98 @@ var gridBasic = `
   </a>
 </div>
 <div class="ui internally celled grid">
-<div class="row">
-  <div class="four wide column">
-    <form class="ui form">
-        <div class="field">
-                <label>Selecionar Periodo</label>
-                <select class="ui fluid  dropdown" id="selectPeriodo">
-                    <option value="">Seleccione un Periodo</option>           
-            </select>
-        </div>
-        <div class="field">
-            <label>Selecionar Programa</label>
-                <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
-                    <input type="hidden" name="programa">
-                    <i class="dropdown icon"></i>
-                    <div class="default text"></div>
-                    <div class="menu">
-                            
+    <div class="row">
+        <div class="four wide column">
+            <form class="ui form">
+                <div class="field">
+                        <label>Selecionar Periodo</label>
+                        <select class="ui fluid  dropdown" id="selectPeriodo">
+                            <option value="">Seleccione un Periodo</option>           
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Selecionar Programa</label>
+                        <div class="ui fluid search selection dropdown" disabled id="selectProgramas">
+                            <input type="hidden" name="programa">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"></div>
+                            <div class="menu">
+                                    
+                            </div>
+                        </div>  
+                </div>        
+                <div class="field right">
+                    <div class="ui buttons">                
+                        <button class="ui yellow button" disabled id="buscarClases">Buscar</button>               
                     </div>
-                </div>  
-        </div>        
-        <div class="field right">
-             <div class="ui buttons">                
-                <button class="ui yellow button" disabled id="buscarClases">Buscar</button>               
-            </div>
+                </div>
+            </form>
         </div>
-    </form>
-  </div>
-  <div class="twelve wide column">
-  <div class="ui dimmer"  id="loadingSearchMaterias">
-    <div class="ui indeterminate text loader">Cargando Materias</div>
-  </div>
-    <table class="ui selectable inverted table" id="tableHorarios">
-        <thead>
-            <tr>
-            <th>Seleccionar</th>
-            <th>#</th>
-            <th>Nombre</th>
-            <th>NRC</th>
-            <th>Creditos</th>
-            <th>Horarios</th>
-			<th>Curso</th>
-            <th>Programa</th>
-            </tr>
-        </thead>
-        <tbody>
-            
-        </tbody>
-        </table>
-  </div>
-</div>
-<div class="row">
-  <div class="sixteen wide column" id="tablasHorarios">
-    <img>
-  </div>  
-</div>
+        <div class="twelve wide column">
+                <div class="ui dimmer"  id="loadingSearchMaterias">
+                    <div class="ui indeterminate text loader">Cargando Materias</div>
+                </div>
+                <div class="ui top attached tabular menu">
+                        <a class="item active" data-tab="first">Lista de Clases</a>        
+                        <a class="item" data-tab="second">Clases Seleccionadas</a>  
+                        <a class="item" data-tab="third">Poribles Horarios</a>                
+                </div>
+                <div class="ui bottom attached tab segment active" data-tab="first">
+                        <table class="ui celled selectable inverted table" id="tableHorarios">
+                            <thead>
+                                <tr>
+                                <th>Seleccionar</th>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>NRC</th>
+                                <th>Creditos</th>
+                                <th>Horarios</th>
+                                <th>Curso</th>
+                                <th>Programa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="third">
+                        <label>Reglas que se tienen en cuenta para calcular tu horario segun las materias que seleccionaste:</label>
+                        <ol class="ui list">
+                            <li>Se Organizan primero las clases con mas creditos</li>
+                            <li>Se Organizan primero las clases con horario mas temprano </li>                            
+                        </ol>
+                        <div class="ui buttons">                            
+                            <button class="ui button" id="limpiarCalculoHorario">Limpiar</button>
+                            <button class="ui yellow button" id="calcularHorario">Calcular Horario</button>
+                        </div>
+                        
+                        <hr>
+                        <div id="posiblesHorarios">
+
+                        </div>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="second">
+                        <table class="ui celled selectable inverted table" id="tableClasesAlmacenadas">
+                            <thead>
+                                <tr>
+                                <th>Seleccionar</th>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>NRC</th>
+                                <th>Creditos</th>
+                                <th>Horarios</th>
+                                <th>Curso</th>
+                                <th>Programa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                </div>                    
+        </div>
+    </div>    
 </div>
 <div class="notification-center-flyout"></div>
 `;
@@ -84,6 +121,13 @@ $(document).ready(function() {
     $(".popool").popup({
         inline: true
       });
+
+
+    $('.menu .item').tab();
+
+    
+
+    
 
 
 
@@ -231,6 +275,12 @@ $(document).ready(function() {
         });
 
     }
+
+    $("#limpiarCalculoHorario").click(function(e){
+        e.preventDefault();
+
+        $("#posiblesHorarios").html("");
+    });
     
 
 
@@ -285,6 +335,8 @@ $(document).ready(function() {
 
 
     }
+
+    
 
     function inicializarBotonBuscar()
     {
@@ -345,6 +397,8 @@ $(document).ready(function() {
     function buildJsonMaterias(clases) {
 
         var data = [];
+
+   
         for (var i = 0; i < clases.length; i++) {
 
             var clase = clases[i];
@@ -442,16 +496,36 @@ $(document).ready(function() {
                 console.log("guardar");
 
                 guardarMateria(res[0]);
+
+               
             } else {
                 console.error("no existe coincidencias para guardar materia");
             }
         } else {
             eliminarMateriaOfStorage($(this).val());
         }
+         //Actualizar tabla de almacenados
+         buildTableClaseAlmacenadas();
 
 
 
     });
+
+    function buildTableClaseAlmacenadas()
+    {
+
+    
+        var clasesAlamacenadas = getStorageMaterias();
+        var data = buildJsonMaterias(clasesAlamacenadas);
+        console.log("tablas ALmacenadas");
+        console.log(clasesAlamacenadas);               
+        var tableClasesAlmacenadas = $("#tableClasesAlmacenadas").DataTable({
+            data: data,
+            destroy: true,            
+            scrollY: "60vh",
+        });        
+     
+    }
 
 
     /**
@@ -707,11 +781,21 @@ $(document).ready(function() {
 
     function buildTableHorarios(grillas,creditosGrillas) {
         var grillasFiltradas = [];
+
+        var totalCordion = '<div class="ui styled fluid accordion">';
         var totalTables = "";
         for (i = 0; i < grillas.length; i++) {
             var grillaActual = grillas[i];
             var grilla = [];
-            var tableHTML = "<table class='ui celled striped table'><thead><tr><th>Dia</th><th>Hora Inicio</th><th>Hora Fin</th><th>Materia</th><th>NRC</th><th>Curso</th><th>Creditos</th><th>ID</th></tr></thead><tbody>";
+
+            var parteAcordeon = ` <div class="title">
+                        <i class="dropdown icon"></i>
+                        Posible Horario #`+ (i+1) +`   Total Creditos:`+ creditosGrillas[i] +`
+                    </div>
+                    <div class="content">
+                    <div class="transition hidden">          
+          `;
+            var tableHTML = "<table class='ui celled inverted selectable striped table'><thead><tr><th>Dia</th><th>Hora Inicio</th><th>Hora Fin</th><th>Materia</th><th>NRC</th><th>Curso</th><th>Creditos</th><th>ID</th></tr></thead><tbody>";
             //Recorrido de dias de la semana
             
             for (o = 0; o < grillaActual.length; o++) {
@@ -756,7 +840,10 @@ $(document).ready(function() {
             }
             tableHTML += "</tbody><tfoot class='full-width'><tr><th colspan='6'>Total Creditos</th><th colspan='2'>"+creditosGrillas[i]+"</th></tr></tfoot>"
             tableHTML += "</table>";
+
+            parteAcordeon += tableHTML  + "</div></div>";
             totalTables += tableHTML;
+            totalCordion += parteAcordeon;
             grillasFiltradas.push(grilla);
         }
 
@@ -767,8 +854,10 @@ $(document).ready(function() {
         console.log("Grillas FIltradas");
         console.log(JSON.stringify(grillasFiltradas));
 
-        $("#tablasHorarios").html("");
-        $("#tablasHorarios").html(totalTables);
+        $("#posiblesHorarios").html("");
+        $("#posiblesHorarios").html(totalCordion);
+        $('.ui.accordion').accordion();
+        
 
 
 
@@ -947,6 +1036,7 @@ $(document).ready(function() {
 
 
 
-
+    //Construir datos tabla de almacenados
+    buildTableClaseAlmacenadas();
 
 });
