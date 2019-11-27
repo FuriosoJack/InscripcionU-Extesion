@@ -41,7 +41,7 @@ var gridBasic = `
                 <div class="ui top attached tabular menu">
                         <a class="item active" data-tab="first">Lista de Clases</a>        
                         <a class="item" data-tab="second">Clases Seleccionadas</a>  
-                        <a class="item" data-tab="third">Poribles Horarios</a>                
+                        <a class="item" data-tab="third">Posibles Horarios</a>                
                 </div>
                 <div class="ui bottom attached tab segment active" data-tab="first">
                         <table class="ui celled selectable inverted table" id="tableHorarios">
@@ -674,6 +674,11 @@ $(document).ready(function() {
 
         console.log("///////////////////////Calculo de horario");
         var clases = getStorageMaterias();
+
+        if(clases.length < 1){
+            alert("Debe seleccionar materias");
+            return;
+        }
 
 
             

@@ -1,5 +1,4 @@
-$(document)
-.ready(function() {
+$(document).ready(function() {
 
   // fix main menu to page on passing
   $('.main.menu').visibility({
@@ -22,5 +21,5 @@ $(document)
     on: 'hover'
   });
   $('.ui.sticky').sticky('refresh');
-})
-;
+});
+
