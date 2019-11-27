@@ -3,10 +3,9 @@
     "name": "__MSG_appName__",
     "short_name": "InscribeU",
     "description": "__MSG_appDesc__",
-    "default_locale": "en",
-    "version": "0.2.5",
-    "options_page": "materiasIndex.html",
-    "homepage_url": "https://chrome.google.com/webstore/detail/regexp-download-organizer/oamembonjndgangicfphlckkdmagpjlg",
+    "default_locale": "es",
+    "version": "0.0.1",
+    "options_page": "materiasIndex.html",    
     "icons": {
         "16": "icons/icon16.png",
         "32": "icons/icon32.png",
@@ -33,7 +32,7 @@
             ]
         },
         {
-            "matches": ["https://genesiscursos.uniminuto.edu/StudentRegistrationSsb/ssb/registration"],
+            "matches": ["https://genesisplus.uniminuto.edu/StudentSelfService/ssb/studentCommonDashboard"],
             "css": [
                 "semantic/semantic.min.css"
             ],
@@ -44,9 +43,12 @@
             ]
         }
     ],
-    "permissions": [
-        "downloads",
+    "permissions": [        
         "activeTab"
-    ]
+    ],
+    "background": {
+        "scripts": ["manager.js"],
+        "persistent": false
+    }
 
 }

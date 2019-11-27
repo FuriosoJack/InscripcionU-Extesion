@@ -1,28 +1,26 @@
-var regexGeneral = "(A{5})|(B{2}A{2}B)|(CDB{2}C)|(C{2}BAD)|(ACA{2}E)";
-var emociones = {
-    "BABAB": "AGRADO",
-    "AABAB": "ALEGRIA",
-    "DCDBC": "DISGUSTO",
-    "DCDAD": "ASCO",
-    "ADEAE": "TRISTEZA"
-}
+$(document)
+.ready(function() {
 
-$(".alfabeto").click(function() {
+  // fix main menu to page on passing
+  $('.main.menu').visibility({
+    type: 'fixed'
+  });
+  $('.overlay').visibility({
+    type: 'fixed',
+    offset: 80
+  });
 
-    alert(localStorage.getItem("coo"));
+  // lazy load images
+  $('.image').visibility({
+    type: 'image',
+    transition: 'vertical flip in',
+    duration: 500
+  });
 
-    var name = $(this).find(".header").html();
-    var val = $(this).attr("val");
-
-    $("#listaActual").append("<li>" + name + "</li>");
-
-    $("#cadenaActual").html($("#cadenaActual").html() + val);
-
-
-    var cadenaActual = String($("#cadenaActual").html());
-
-    var count = (cadenaActual.match("(A{5})|(B{2}A{2}B)|(CDB{2}C)|(C{2}BAD)|(ACA{2}E)") || []).length;
-    console.log(count);
-
-
-});
+  // show dropdown on hover
+  $('.main.menu  .ui.dropdown').dropdown({
+    on: 'hover'
+  });
+  $('.ui.sticky').sticky('refresh');
+})
+;

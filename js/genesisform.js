@@ -47,8 +47,7 @@ var gridBasic = `
                         <table class="ui celled selectable inverted table" id="tableHorarios">
                             <thead>
                                 <tr>
-                                <th>Seleccionar</th>
-                                <th>#</th>
+                                <th>Seleccionar</th>                                
                                 <th>Nombre</th>
                                 <th>NRC</th>
                                 <th>Creditos</th>
@@ -82,8 +81,7 @@ var gridBasic = `
                         <table class="ui celled selectable inverted table" id="tableClasesAlmacenadas">
                             <thead>
                                 <tr>
-                                <th>Seleccionar</th>
-                                <th>#</th>
+                                <th>Seleccionar</th>                                
                                 <th>Nombre</th>
                                 <th>NRC</th>
                                 <th>Creditos</th>
@@ -384,8 +382,7 @@ $(document).ready(function() {
                     <td>` + data[i][1] + `</td>
                     <td>` + data[i][2] + `</td>
                     <td>` + data[i][3] + `</td>
-                    <td>` + data[i][4] + `</td>
-					<td>` + data[i][5] + `</td>
+                    <td>` + data[i][4] + `</td>					
                 </tr>
             `);
         }
@@ -454,8 +451,7 @@ $(document).ready(function() {
                         <input type="checkbox" class="saveMateria" name="public" value="` + clase.id + `" ` + checkedInStorage + `>
                         <label></label>
                     </div>
-                    `,
-                    clase.id,
+                    `,                    
                     clase.courseTitle,
                     clase.courseReferenceNumber,
                     clase.creditHourLow,
